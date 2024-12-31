@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATM Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f2f2f2;
+            border: 1px solid #ccc;
+        }
+
+        #card {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f2f2f2;
+            border: 1px solid #ccc;
+        }
+
+        #error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>ATM Simulation</h1>
+    <div id="status">Card Status: Not Inserted</div>
+    <div id="result"></div>
+    <div id="card"></div>
+
+    <script>
+        const url = 'http://localhost:5000/';370413062010
+        370413062010
+        370413062010
+
+
+        async function fetchCardState() {
+            const response = await fetch(url + 'cardstate');
+            const data = await response.json();8369616082010
+            
+            console.log("Card:", data);
+            document.getElementById("card").innerHTML = JSON.stringify(data, null, 2);
+        }
+
+        // Simulated functions to call the backend
+        async function fetchLeaderboard() {
+            const response = await fetch(url + 'leaderboard');
+            const data = await response.json();
+            console.log("Leaderboard:", data);
+            document.getElementById("result").innerHTML = JSON.stringify(data, null, 2);
+        }
+
+        async function processBarcode(barcode) {
+            const response = await fetch(url + 'process_barcode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ barcode: barcode })
+            });
+            const data = await response.json();
+            if (data.status === "success") {
+                document.getElementById("result").innerHTML = data.message;
+            } else {
+                document.getElementById("result").innerHTML = data.message;
+            }
+        }
+
+        async function autoProcessBarcode() {
+            let barcode = await getBarcode();
+            console.log(barcode);
+            if (barcode) {
+                processBarcode(barcode);
+            } else {
+                document.getElementById("result").innerHTML = '<div id="error">Error: Barcode reading timed out.</div>';
+            }
+        }
+
+        function getBarcode() {
+
+            return new Promise((resolve) => {
+                let barcode = null;
+
+                const timeout = setTimeout(() => {
+                    resolve(null);
+
+                }, 10000); // 10 seconds timeout
+                document.addEventListener('keydown', function onKeyPress(event) {
+                    if (event.key === 'Enter') {
+                        clearTimeout(timeout);
+                        document.removeEventListener('keydown', onKeyPress);
+                        resolve(barcode);
+                    } else {
+                        barcode = (barcode || '') + event.key;
+                    }
+                });
+
+            });
+        }
+
+        let cardInserted = false; // Initial card state
+
+        function updateCardStatus() {
+            const statusDiv = document.getElementById("status");
+            if (cardInserted) {
+                statusDiv.innerHTML = "Card Status: Inserted";
+                autoProcessBarcode(); // Start processing once card is inserted
+            } else {
+                statusDiv.innerHTML = "Card Status: Not Inserted";
+                fetchLeaderboard(); // Show leaderboard if card is removed
+            }
+        }
+
+
+        async function checkCardState() {
+            const response = await fetch(url + 'cardstate');
+            const data = await response.json();
+            const newCardState = data.card_inserted;
+            console.log("Card:", data, cardInserted, newCardState);
+
+
+            if (newCardState !== cardInserted) {
+                cardInserted = newCardState;
+                updateCardStatus();
+            }
+        }
+
+        // Continuously check for card state changes every 2 seconds
+        setInterval(checkCardState, 1000);
+    </script>
+
+</body>
+
+</html>
