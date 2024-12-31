@@ -39,105 +39,128 @@
     <div id="card"></div>
 
     <script>
-        const url = 'http://localhost:5000/';370413062010
-        370413062010
-        370413062010
-
-
+        const url = 'http://localhost:5000/';
+        const api_url = 'https://result.sibaq.in/search?student=';
+    
+        // Fetch Card State from Backend
         async function fetchCardState() {
-            const response = await fetch(url + 'cardstate');
-            const data = await response.json();8369616082010
-            
-            console.log("Card:", data);
-            document.getElementById("card").innerHTML = JSON.stringify(data, null, 2);
+            try {
+                const response = await fetch(url + 'cardstate');
+                if (!response.ok) throw new Error('Failed to fetch card state');
+                const data = await response.json();
+                return data.card_inserted;
+            } catch (error) {
+                console.error('Error fetching card state:', error);
+                return null;
+            }
         }
-
-        // Simulated functions to call the backend
+    
+        // Fetch Leaderboard from Backend
         async function fetchLeaderboard() {
-            const response = await fetch(url + 'leaderboard');
-            const data = await response.json();
-            console.log("Leaderboard:", data);
-            document.getElementById("result").innerHTML = JSON.stringify(data, null, 2);
+            try {
+                const response = await fetch(url + 'leaderboard');
+                if (!response.ok) throw new Error('Failed to fetch leaderboard');
+                const data = await response.json();
+                console.log("Leaderboard:", data);
+                document.getElementById("result").innerHTML = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('Error fetching leaderboard:', error);
+                document.getElementById("result").innerHTML = `<div id="error">Error: Unable to fetch leaderboard.</div>`;
+            }
         }
-
+    
+        // Process Barcode via Backend
         async function processBarcode(barcode) {
-            const response = await fetch(url + 'process_barcode', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ barcode: barcode })
-            });
-            const data = await response.json();
-            if (data.status === "success") {
-                document.getElementById("result").innerHTML = data.message;
-            } else {
-                document.getElementById("result").innerHTML = data.message;
+            try {
+                const response = await fetch(url + 'process_barcode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ barcode })
+                });
+                const data = await response.json();
+                document.getElementById("result").innerHTML = data.message || "Processed successfully.";
+            } catch (error) {
+                console.error('Error processing barcode:', error);
+                document.getElementById("result").innerHTML = `<div id="error">Error: Unable to process barcode.</div>`;
             }
         }
-
-        async function autoProcessBarcode() {
-            let barcode = await getBarcode();
-            console.log(barcode);
-            if (barcode) {
-                processBarcode(barcode);
-            } else {
-                document.getElementById("result").innerHTML = '<div id="error">Error: Barcode reading timed out.</div>';
-            }
-        }
-
+    
+        // Simulate Barcode Input
         function getBarcode() {
-
             return new Promise((resolve) => {
-                let barcode = null;
-
+                let barcode = '';
                 const timeout = setTimeout(() => {
-                    resolve(null);
 
+                    resolve(null);
                 }, 10000); // 10 seconds timeout
-                document.addEventListener('keydown', function onKeyPress(event) {
+    
+                const onKeyPress = (event) => {
                     if (event.key === 'Enter') {
                         clearTimeout(timeout);
                         document.removeEventListener('keydown', onKeyPress);
                         resolve(barcode);
                     } else {
-                        barcode = (barcode || '') + event.key;
+                        barcode += event.key;
                     }
-                });
-
+                };
+    
+                document.addEventListener('keydown', onKeyPress);
             });
         }
+    
+        // Auto Process Barcode
+        async function autoProcessBarcode() {
+            document.getElementById("result").innerHTML = "Checking for candidate details...";
+            const barcode = await getBarcode();
+            if (barcode) {
+            processBarcode(barcode);
+            } else {
+            document.getElementById("result").innerHTML = `<div id="error">Error: Barcode reading timed out.</div>`;
+            
+            }
+        }
 
-        let cardInserted = false; // Initial card state
-
-        function updateCardStatus() {
+        async function autoProcessBarcode() {
+            document.getElementById("result").innerHTML = "Checking for candidate details...";
+            const barcode = await getBarcode();
+            if (barcode) {
+                processBarcode(barcode);
+            } else {
+                document.getElementById("result").innerHTML = `<div id="error">Error: Barcode reading timed out.</div>`;
+            }
+        }
+    
+        // Card State Handling
+        let cardInserted = false;
+    
+        function updateCardStatus(newState) {
             const statusDiv = document.getElementById("status");
+            cardInserted = newState;
+    
             if (cardInserted) {
                 statusDiv.innerHTML = "Card Status: Inserted";
-                autoProcessBarcode(); // Start processing once card is inserted
+                autoProcessBarcode();
             } else {
                 statusDiv.innerHTML = "Card Status: Not Inserted";
-                fetchLeaderboard(); // Show leaderboard if card is removed
+                fetchLeaderboard();
             }
         }
-
-
+    
         async function checkCardState() {
-            const response = await fetch(url + 'cardstate');
-            const data = await response.json();
-            const newCardState = data.card_inserted;
-            console.log("Card:", data, cardInserted, newCardState);
-
-
+            const newCardState = await fetchCardState();
+            if (newCardState === null) {
+                document.getElementById("status").innerHTML = `<div id="error">Error: Unable to fetch card state.</div>`;
+                return;
+            }
+    
             if (newCardState !== cardInserted) {
-                cardInserted = newCardState;
-                updateCardStatus();
+                updateCardStatus(newCardState);
             }
         }
-
-        // Continuously check for card state changes every 2 seconds
-        setInterval(checkCardState, 1000);
-    </script>
+    
+        // Periodically Check Card State
+        setInterval(checkCardState, 2000);
+    </script>    
 
 </body>
 
