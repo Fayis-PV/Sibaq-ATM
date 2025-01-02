@@ -37,7 +37,7 @@ def cardstate():
     if arduino_port:
         try:
             ser = serial.Serial(arduino_port, 9600)
-            data = ser.readline().decode("utf-8").strip()
+            data = ser.readline().decode("utf-8", errors='ignore').strip()
             ser.close()
             if data == '1':
                 return jsonify({"card_inserted": True})

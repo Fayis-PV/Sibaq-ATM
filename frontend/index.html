@@ -6,8 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATM Simulation</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        @font-face {
+            font-family: Nippo;
+            src: url('/media/Nippo-Medium.ttf');
+        }
+
+        * {
+            font-family: Nippo, sans-serif;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        .wrap {
+            border-right: .08em solid red;
+            animation: caret 1s steps(1) infinite;
+        }
+
+        @keyframes caret {
+            50% {
+                border-color: transparent;
+            }
         }
 
         #result {
@@ -28,20 +46,121 @@
             color: red;
             font-weight: bold;
         }
+
+        .typewrite {
+            user-select: none;
+            color: white;
+            background: repeating-linear-gradient(-45deg, red 0%, 14.28%,rgb(0, 255, 255) 21.4%, cyan 28.56%, blue 35.7%, magenta 42.84%, red 50%);
+            background-size: 600vw 600vw;
+            -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text;
+            animation: slide 10s linear infinite forwards;
+        }
+
+        @keyframes slide {
+            0% {
+                background-position-x: 0%;
+            }
+
+            100% {
+                background-position-x: 600vw;
+            }
+        }
     </style>
 </head>
 
-<body>
+<body style="overflow: hidden;">
+    <iframe src="https://result.sibaq.in/" style="width: 100%; height: 100vh;" scrolling="no" class="iframe"></iframe>
+    <div class="verify"
+        style="width: 100%; height: 100vh; background-image: linear-gradient(90deg, rgba(232, 185, 185, 0.5),rgba(95, 93, 93, 0.5)); position:fixed; top:0; display:none;justify-content: center; align-items: center; ">
+        <img src="/media/Flip.gif" alt="" style="width: 60%; border-radius: 50px;" class="verify-img">
+    </div>
+    <div class="process"
+        style="width: 100%; height: 100vh;  background-image: linear-gradient(90deg, rgba(76, 70, 70, 0.5),rgba(169, 169, 169, 0.5)); position:fixed; top:0; display:none; flex-direction: column; justify-content: center; align-items: center;">
+        <div class="process-innerbox"
+            style="width:40%; height: 80%; text-align: center; background-color: white; border-radius: 50px;padding:2%;">
+            <img src="/media/processing.gif" alt="" style="width: 100%; ; " class="process-img">
 
-    <h1>ATM Simulation</h1>
-    <div id="status">Card Status: Not Inserted</div>
-    <div id="result"></div>
-    <div id="card"></div>
+            <h1>
+                <a href="" class="typewrite" data-period="2000"
+                    style="text-transform: capitalize; text-decoration: none; text-align: center;"
+                    data-type='[ "Welcome", "SIBAQ-25", "Arts Tracking Machine", "آلة تتبع الفنون", "Verifying Card..."]' class="typewrite">
+                    <span class="wrap"></span>
+                </a>
+            </h1>
+        </div>
+    </div>
+    <div style="position: absolute; bottom: 0;left: 0; background-color: aqua; visibility: hidden;">
+        <h1>ATM Simulation</h1>
+        <div id="status">Card Status: Not Inserted</div>
+        <div id="result"></div>
+        <div id="card"></div>
+    </DIV>
 
+    <script>
+        var TxtType = function (el, toRotate, period) {
+            this.toRotate = toRotate;
+            this.el = el;
+            this.loopNum = 0;
+            this.period = parseInt(period, 10) || 1000;
+            this.txt = '';
+            this.tick();
+            this.isDeleting = false;
+        };
+
+        TxtType.prototype.tick = function () {
+            var i = this.loopNum % this.toRotate.length;
+            var fullTxt = this.toRotate[i];
+
+            if (this.isDeleting) {
+                this.txt = fullTxt.substring(0, this.txt.length - 1);
+            } else {
+                this.txt = fullTxt.substring(0, this.txt.length + 1);
+            }
+
+            this.el.innerHTML = '<span class="wrap">' + this.txt + '</span>';
+
+            var that = this;
+            var delta = 200 - Math.random() * 100;
+
+            if (this.isDeleting) { delta /= 2; }
+
+            if (!this.isDeleting && this.txt === fullTxt) {
+                delta = this.period;
+                this.isDeleting = true;
+            } else if (this.isDeleting && this.txt === '') {
+                this.isDeleting = false;
+                this.loopNum++;
+                delta = 500;
+            }
+
+            setTimeout(function () {
+                that.tick();
+            }, delta);
+        };
+
+        window.onload = function () {
+            var elements = document.getElementsByClassName('typewrite');
+            for (var i = 0; i < elements.length; i++) {
+                var toRotate = elements[i].getAttribute('data-type');
+                var period = elements[i].getAttribute('data-period');
+                if (toRotate) {
+                    new TxtType(elements[i], JSON.parse(toRotate), period);
+                }
+            }
+            // INJECT CSS
+            var css = document.createElement("style");
+            css.type = "text/css";
+            // css.innerHTML = ".typewrite > .wrap { border-right: 0.08em solid #fff}";
+            document.body.appendChild(css);
+        };
+    </script>
     <script>
         const url = 'http://localhost:5000/';
         const api_url = 'https://result.sibaq.in/search?student=';
-    
+
+
+
         // Fetch Card State from Backend
         async function fetchCardState() {
             try {
@@ -54,37 +173,28 @@
                 return null;
             }
         }
-    
+
         // Fetch Leaderboard from Backend
         async function fetchLeaderboard() {
             try {
-                const response = await fetch(url + 'leaderboard');
-                if (!response.ok) throw new Error('Failed to fetch leaderboard');
-                const data = await response.json();
-                console.log("Leaderboard:", data);
-                document.getElementById("result").innerHTML = JSON.stringify(data, null, 2);
+                document.querySelector('.iframe').src = 'https://result.sibaq.in/';
             } catch (error) {
                 console.error('Error fetching leaderboard:', error);
                 document.getElementById("result").innerHTML = `<div id="error">Error: Unable to fetch leaderboard.</div>`;
             }
         }
-    
-        // Process Barcode via Backend
+        // Render API URL content in the same tab
         async function processBarcode(barcode) {
             try {
-                const response = await fetch(url + 'process_barcode', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ barcode })
-                });
-                const data = await response.json();
-                document.getElementById("result").innerHTML = data.message || "Processed successfully.";
+                document.querySelector('.iframe').src = api_url + barcode;
+                // const htmlContent = await response.text();
+
             } catch (error) {
-                console.error('Error processing barcode:', error);
-                document.getElementById("result").innerHTML = `<div id="error">Error: Unable to process barcode.</div>`;
+                console.error('Error rendering API URL content:', error);
+                document.getElementById("result").innerHTML = `<div id="error">Error: Unable to render API URL content.</div>`;
             }
         }
-    
+
         // Simulate Barcode Input
         function getBarcode() {
             return new Promise((resolve) => {
@@ -93,74 +203,71 @@
 
                     resolve(null);
                 }, 10000); // 10 seconds timeout
-    
+
                 const onKeyPress = (event) => {
                     if (event.key === 'Enter') {
                         clearTimeout(timeout);
                         document.removeEventListener('keydown', onKeyPress);
                         resolve(barcode);
+                        document.querySelector('.verify').style.display = 'none';
                     } else {
                         barcode += event.key;
                     }
                 };
-    
+
                 document.addEventListener('keydown', onKeyPress);
             });
         }
-    
+
         // Auto Process Barcode
         async function autoProcessBarcode() {
             document.getElementById("result").innerHTML = "Checking for candidate details...";
             const barcode = await getBarcode();
             if (barcode) {
-            processBarcode(barcode);
+                document.querySelector('.verify').style.display = 'none';
+                document.querySelector('.process').style.display = 'none';
+                processBarcode(barcode);
             } else {
-            document.getElementById("result").innerHTML = `<div id="error">Error: Barcode reading timed out.</div>`;
-            
+                document.querySelector('.verify').style.display = 'flex';
+                document.querySelector('.process').style.display = 'none';
             }
         }
 
-        async function autoProcessBarcode() {
-            document.getElementById("result").innerHTML = "Checking for candidate details...";
-            const barcode = await getBarcode();
-            if (barcode) {
-                processBarcode(barcode);
-            } else {
-                document.getElementById("result").innerHTML = `<div id="error">Error: Barcode reading timed out.</div>`;
-            }
-        }
-    
         // Card State Handling
         let cardInserted = false;
-    
+
         function updateCardStatus(newState) {
             const statusDiv = document.getElementById("status");
             cardInserted = newState;
-    
+
             if (cardInserted) {
                 statusDiv.innerHTML = "Card Status: Inserted";
+                document.querySelector('.process').style.display = 'flex';
+                document.querySelector('.verify').style.display = 'none';
                 autoProcessBarcode();
             } else {
                 statusDiv.innerHTML = "Card Status: Not Inserted";
+                document.querySelector('.verify').style.display = 'none';
+                document.querySelector('.process').style.display = 'none';
                 fetchLeaderboard();
             }
         }
-    
+
         async function checkCardState() {
             const newCardState = await fetchCardState();
             if (newCardState === null) {
                 document.getElementById("status").innerHTML = `<div id="error">Error: Unable to fetch card state.</div>`;
                 return;
             }
-    
+
             if (newCardState !== cardInserted) {
                 updateCardStatus(newCardState);
             }
         }
-    
+
         // Periodically Check Card State
         setInterval(checkCardState, 2000);
-    </script>    
+    </script>
 
 </body>
 
