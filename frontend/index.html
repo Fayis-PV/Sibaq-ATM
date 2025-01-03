@@ -50,7 +50,7 @@
         .typewrite {
             user-select: none;
             color: white;
-            background: repeating-linear-gradient(-45deg, red 0%, 14.28%,rgb(0, 255, 255) 21.4%, cyan 28.56%, blue 35.7%, magenta 42.84%, red 50%);
+            background: repeating-linear-gradient(-45deg, red 0%, 14.28%, rgb(0, 255, 255) 21.4%, cyan 28.56%, blue 35.7%, magenta 42.84%, red 50%);
             background-size: 600vw 600vw;
             -webkit-text-fill-color: transparent;
             -webkit-background-clip: text;
@@ -70,7 +70,7 @@
 </head>
 
 <body style="overflow: hidden;">
-    <iframe src="https://result.sibaq.in/" style="width: 100%; height: 100vh;" scrolling="no" class="iframe"></iframe>
+    <iframe src="https://result.sibaq.in/" style="width: 100%; height: 100vh;" scrolling="no" class="iframe" allowfullscreen></iframe>
     <div class="verify"
         style="width: 100%; height: 100vh; background-image: linear-gradient(90deg, rgba(232, 185, 185, 0.5),rgba(95, 93, 93, 0.5)); position:fixed; top:0; display:none;justify-content: center; align-items: center; ">
         <img src="/media/Flip.gif" alt="" style="width: 60%; border-radius: 50px;" class="verify-img">
@@ -84,7 +84,8 @@
             <h1>
                 <a href="" class="typewrite" data-period="2000"
                     style="text-transform: capitalize; text-decoration: none; text-align: center;"
-                    data-type='[ "Welcome", "SIBAQ-25", "Arts Tracking Machine", "آلة تتبع الفنون", "Verifying Card..."]' class="typewrite">
+                    data-type='[ "Welcome", "SIBAQ-25", "Arts Tracking Machine", "آلة تتبع الفنون", "Verifying Card..."]'
+                    class="typewrite">
                     <span class="wrap"></span>
                 </a>
             </h1>
@@ -92,10 +93,16 @@
     </div>
     <div style="position: absolute; bottom: 0;left: 0; background-color: aqua; visibility: hidden;">
         <h1>ATM Simulation</h1>
-        <div id="status">Card Status: Not Inserted</div>
+        <div id="status">Card Status: Not inserted</div>
         <div id="result"></div>
         <div id="card"></div>
-    </DIV>
+    </div>
+    <audio hidden class="insert" >
+        <source src="/media/insert.mp3" type="audio/mpeg" />
+    </audio>
+    <audio playbackRate="2.0" hidden class="scanner">
+        <source src="/media/scanner.mp3" type="audio/mpeg"  />
+    </audio>
 
     <script>
         var TxtType = function (el, toRotate, period) {
@@ -157,9 +164,22 @@
     </script>
     <script>
         const url = 'http://localhost:5000/';
-        const api_url = 'https://result.sibaq.in/search?student=';
+        const api_url = 'https://result.sibaq.in/search?student=Data';
 
+        // Start the audio element
+        function startAudio(audio) {
+            const audioElement = document.querySelector(audio);
+            console.log('Audio Element:', audioElement);
+            
+            if (audioElement) {
+                console.log('Playing audio:', audio);
 
+                audioElement.play()
+                .catch(error => {
+                    console.log('Error playing audio:', error);
+                });
+            }
+        }
 
         // Fetch Card State from Backend
         async function fetchCardState() {
@@ -203,6 +223,7 @@
 
                     resolve(null);
                 }, 10000); // 10 seconds timeout
+                startAudio('.scanner');
 
                 const onKeyPress = (event) => {
                     if (event.key === 'Enter') {
@@ -234,19 +255,19 @@
         }
 
         // Card State Handling
-        let cardInserted = false;
+        let cardinserted = false;
 
         function updateCardStatus(newState) {
             const statusDiv = document.getElementById("status");
-            cardInserted = newState;
+            cardinserted = newState;
 
-            if (cardInserted) {
-                statusDiv.innerHTML = "Card Status: Inserted";
+            if (cardinserted) {
+                statusDiv.innerHTML = "Card Status: inserted";
                 document.querySelector('.process').style.display = 'flex';
                 document.querySelector('.verify').style.display = 'none';
                 autoProcessBarcode();
             } else {
-                statusDiv.innerHTML = "Card Status: Not Inserted";
+                statusDiv.innerHTML = "Card Status: Not inserted";
                 document.querySelector('.verify').style.display = 'none';
                 document.querySelector('.process').style.display = 'none';
                 fetchLeaderboard();
@@ -260,11 +281,13 @@
                 return;
             }
 
-            if (newCardState !== cardInserted) {
+            if (newCardState !== cardinserted) {
                 updateCardStatus(newCardState);
+                startAudio('.insert');
             }
         }
 
+        
         // Periodically Check Card State
         setInterval(checkCardState, 2000);
     </script>
