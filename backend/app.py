@@ -8,6 +8,23 @@ import serial
 app = Flask(__name__)
 CORS(app)  # Enable CORS for the Flask app
 
+# API to fetch leaderboard
+@app.route("/leaderboard", methods=["GET"])
+def leaderboard():
+    leaderboard_data = {
+        "Leader Board": {
+            "1": "John Doe",
+            "2": "Jane Smith",
+            "3": "Alice Johnson"
+        },
+        "Ads": {
+            "1": "https://example.com/ad1.jpg",
+            "2": "https://example.com/ad2.jpg",
+            "3": "https://example.com/ad3.jpg"
+        }
+    }
+    return jsonify(leaderboard_data)
+
 @app.route("/cardstate", methods=["GET"])
 def cardstate():
     ports = serial.tools.list_ports.comports()
@@ -29,6 +46,16 @@ def cardstate():
         except Exception as e:
             print(e)
     return jsonify({"status": "error", "message": "No Arduino connected."})
+
+# API to process barcode
+@app.route("/process_barcode", methods=["POST"])
+def process_barcode():
+    data = request.json
+    barcode = data.get("barcode")
+    if barcode:
+        return jsonify({"status": "success", "message": f"Barcode {barcode} processed."})
+    return jsonify({"status": "error", "message": "No barcode provided."})
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
